@@ -215,7 +215,7 @@ namespace QA_AutomationFramework.Tests
             string videoFilePath = VideoHelper.FindVideoFile(TestContext.CurrentContext.Test.Name, recordingsFolder);
             if (videoFilePath != null)
             {
-                string videoLink = Path.Combine(recordingsFolder, Path.GetFileName(videoFilePath));
+                string videoLink = Path.Combine("Recordings", Path.GetFileName(videoFilePath));
                 test.Log(Status.Info, $"Test recording:<br/><video width='320' height='240' controls><source src='{videoLink}' type='video/mp4'>Your browser does not support the video tag.</video>");
             }
         }
