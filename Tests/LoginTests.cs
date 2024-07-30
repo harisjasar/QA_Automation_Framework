@@ -12,7 +12,7 @@ namespace QA_AutomationFramework.Tests
         protected override void SetUp()
         {
             base.SetUp();
-            _loginPage = new LoginPage(driver);
+            _loginPage = new LoginPage(driver, emailService, testData);
         }
 
         private void NavigateAndEnterEmail(string email)

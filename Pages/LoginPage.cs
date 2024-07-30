@@ -1,11 +1,18 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using QA_AutomationFramework.Contracts;
+using QA_AutomationFramework.Data;
 
 namespace QA_AutomationFramework.Pages
 {
     public class LoginPage : BasePage
     {
-        public LoginPage(IWebDriver driver) : base(driver) { }
+        private readonly IEmailService _emailService;
+        private readonly TestData _testData;
+        public LoginPage(IWebDriver driver, IEmailService emailService, TestData testData) : base(driver) {
+            _emailService = emailService;
+            _testData = testData;
+        }
 
         private IWebElement ContinueWithEmailButton => WaitForElementToBeClickable(By.Id("email-btn"));
         private IWebElement ContinueButton => WaitForElementToBeClickable(By.Id("1-submit"));
@@ -42,6 +49,18 @@ namespace QA_AutomationFramework.Pages
         {
             var classes = element.GetAttribute("class");
             return classes != null && classes.Split(' ').Contains(className);
+        }
+
+        public void LoginIntoApp(string email = "")
+        {
+            string emailToUse = string.IsNullOrEmpty(email) ? _testData.Email : email;
+            NavigateToPageByUrl(_testData.BaseUrl);
+            EnterEmail(emailToUse);
+            SubmitEmail();
+            ClickContinue();
+            EnterOtp(_emailService.GetMostRecentOtp());
+            ClickContinue();
+            GetUserInfoEmail();
         }
     }
 }
