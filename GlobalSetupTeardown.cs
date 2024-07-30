@@ -7,6 +7,9 @@ namespace QA_AutomationFramework
     [SetUpFixture]
     public class GlobalSetupTeardown
     {
+        private const int MaxRetryAttempts = 20;
+        private const int RetryDelayMilliseconds = 3000;
+
         [OneTimeTearDown]
         public void GlobalTeardown()
         {
@@ -35,7 +38,7 @@ namespace QA_AutomationFramework
                     foreach (var videoFile in videoFiles)
                     {
                         var destFile = Path.Combine(reportFolder, "Recordings", Path.GetFileName(videoFile));
-                        File.Move(videoFile, destFile);
+                        MoveFileWithRetry(videoFile, destFile);
                     }
                 }
             }
@@ -45,6 +48,28 @@ namespace QA_AutomationFramework
             foreach (var reportDirectory in reportDirectories)
             {
                 Directory.Delete(reportDirectory, true);
+            }
+        }
+
+        private void MoveFileWithRetry(string sourceFilePath, string destFilePath)
+        {
+            int attempt = 0;
+            while (true)
+            {
+                try
+                {
+                    File.Move(sourceFilePath, destFilePath);
+                    break;
+                }
+                catch (IOException)
+                {
+                    attempt++;
+                    if (attempt >= MaxRetryAttempts)
+                    {
+                        throw;
+                    }
+                    Thread.Sleep(RetryDelayMilliseconds);
+                }
             }
         }
 
