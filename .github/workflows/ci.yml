@@ -1,0 +1,122 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+  workflow_dispatch:
+    inputs:
+      includeVideoRecording:
+        description: 'Include Video Recording'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      includeStepScreenshots:
+        description: 'Include Step Screenshots'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      environment:
+        description: 'Select Environment'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'integration'
+          - 'staging'
+          - 'production'
+
+permissions:
+  checks: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4.0.1
+        with:
+          dotnet-version: '8.0'
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Update appsettings.json
+        if: ${{ github.event.inputs.includeStepScreenshots != '' || github.event.inputs.includeVideoRecording != '' }}
+        run: |
+            $appSettingsPath = "./Configs/appsettings.json"
+
+            if (-Not (Test-Path $appSettingsPath)) {
+                Write-Host "File not found: $appSettingsPath"
+                exit 1
+            }
+            $json = Get-Content $appSettingsPath -Raw | ConvertFrom-Json
+            $json.TestSettings.IncludeStepScreenshots = [System.Convert]::ToBoolean("${{ github.event.inputs.includeStepScreenshots }}")
+            $json.TestSettings.IncludeVideoRecording = [System.Convert]::ToBoolean("${{ github.event.inputs.includeVideoRecording }}")
+            
+            $json | ConvertTo-Json -Depth 32 | Set-Content $appSettingsPath
+        shell: pwsh
+
+      - name: Update appsettings.json
+        run: pwsh ./update-appsettings.ps1 -email "${{ secrets.EMAIL }}" -appPassword "${{ secrets.APPPASSWORD }}" -imapHost "${{ secrets.HOST}}"
+          
+      - name: Build the project
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests and generate report
+        env:
+          TEST_ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.trx"
+        continue-on-error: true
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4.3.4
+        with:
+          name: HTML Report
+          path: ./bin/Release/net8.0/Reports/Run*/**
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4.3.4
+        with:
+          name: TestResults
+          path: ./TestResults/*.trx
+
+  test-report:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Test Results
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: TestResults
+          path: ./TestResults
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1.9.1
+        if: success() || failure()
+        with:
+          name: Test results
+          path: ./TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
+
+

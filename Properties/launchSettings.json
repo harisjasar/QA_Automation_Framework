@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "QA_AutomationFramework": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TEST_ENVIRONMENT": "integration"
+      }
+    }
+  }
+}

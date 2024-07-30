@@ -1,0 +1,84 @@
+name: CI Pipeline Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+  workflow_dispatch:
+    inputs:
+      includeVideoRecording:
+        description: 'Include Video Recording'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      includeStepScreenshots:
+        description: 'Include Step Screenshots'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      environment:
+        description: 'Select Environment'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'integration'
+          - 'staging'
+          - 'production'
+
+permissions:
+  checks: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq on Windows
+        run: Invoke-WebRequest -Uri https://github.com/stedolan/jq/releases/download/jq-1.7.1/jq-win64.exe -OutFile jq.exe
+        shell: powershell
+
+
+      - name: Update appsettings.json
+        if: ${{ github.event.inputs.includeStepScreenshots != '' || github.event.inputs.includeVideoRecording != '' }}
+        run: |
+            $appSettingsPath = "./Configs/appsettings.json"
+
+            if (-Not (Test-Path $appSettingsPath)) {
+                Write-Host "File not found: $appSettingsPath"
+                exit 1
+            }
+            $json = Get-Content $appSettingsPath -Raw | ConvertFrom-Json
+            $json.TestSettings.IncludeStepScreenshots = [System.Convert]::ToBoolean("${{ github.event.inputs.includeStepScreenshots }}")
+            $json.TestSettings.IncludeVideoRecording = [System.Convert]::ToBoolean("${{ github.event.inputs.includeVideoRecording }}")
+            
+            $json | ConvertTo-Json -Depth 32 | Set-Content $appSettingsPath
+        shell: pwsh
+
+      - name: CAT
+        run: cat ./Configs/appsettings.json
+        shell: powershell
+
+
+      - name: Update appsettings.json
+        run: pwsh ./update-appsettings.ps1 -email "${{ secrets.EMAIL }}" -appPassword "${{ secrets.APPPASSWORD }}" -imapHost "${{ secrets.HOST}}"
+
+      - name: CAT
+        run: cat ./Configs/appsettings.json
+        shell: powershell
+          
