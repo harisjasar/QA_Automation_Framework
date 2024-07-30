@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using AventStack.ExtentReports.Model;
+using NUnit.Framework;
 using QA_AutomationFramework.Pages;
 
 namespace QA_AutomationFramework.Tests
@@ -58,6 +59,7 @@ namespace QA_AutomationFramework.Tests
         }
 
         [Test]
+        [Category("smoke")]
         public void InvalidEmail_ShouldDisableContinueButton()
         {
             Step("Navigate to the main page", () => _loginPage.NavigateToPageByUrl(testData.BaseUrl));

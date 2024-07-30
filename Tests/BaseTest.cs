@@ -20,10 +20,12 @@ namespace QA_AutomationFramework.Tests
         protected ExtentReports extent;
         private ExtentSparkReporter spark;
         protected ExtentTest test;
+        protected ExtentJsonFormatter json;
         private TestSettings testSettings;
         protected string reportFolder;
         protected string reportPath;
         protected string recordingsFolder;
+        protected string jsonReportFolder;
         protected TestData testData;
         
 
@@ -39,9 +41,12 @@ namespace QA_AutomationFramework.Tests
             reportFolder = Path.Combine(AppContext.BaseDirectory, "Reports", $"Run_{timeStamp}");
             Directory.CreateDirectory(reportFolder);
             reportPath = Path.Combine(reportFolder, "report.html");
-            extent = new ExtentReports();
+            jsonReportFolder = Path.Combine(reportFolder, "report.json");
             spark = new ExtentSparkReporter(reportPath);
-            extent.AttachReporter(spark);
+            json = new ExtentJsonFormatter(jsonReportFolder);
+            extent = new ExtentReports();
+            extent.CreateDomainFromJsonArchive(jsonReportFolder);
+            extent.AttachReporter(json, spark);
 
             recordingsFolder = Path.Combine(reportFolder, "Recordings");
             Directory.CreateDirectory(recordingsFolder);
@@ -53,7 +58,19 @@ namespace QA_AutomationFramework.Tests
             driver = new ChromeDriver(new ChromeOptions());
             driver.Manage().Window.Maximize();
             emailService = serviceProvider.GetService<IEmailService>();
+
             test = extent.CreateTest(TestContext.CurrentContext.Test.Name);
+            var classCategories = GetType().GetCustomAttributes(typeof(CategoryAttribute), true)
+                                            .Cast<CategoryAttribute>()
+                                            .Select(c => c.Name)
+                                            .ToArray();
+            test.AssignCategory(classCategories);
+            var testMethod = GetType().GetMethod(TestContext.CurrentContext.Test.MethodName);
+            var testCategories = testMethod.GetCustomAttributes(typeof(CategoryAttribute), true)
+                                           .Cast<CategoryAttribute>()
+                                           .Select(c => c.Name)
+                                           .ToArray();
+            test.AssignCategory(testCategories);
 
             if (testSettings.IncludeVideoRecording)
             {
