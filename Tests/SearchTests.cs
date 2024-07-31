@@ -19,7 +19,7 @@ namespace QA_AutomationFramework.Tests
 
 
         [Test]
-        public void SearchItem()
+        public void SearchItem_ShouldReturnSingleResultWithMatchingName()
         {
             var searchTerm = "Book";
             Step("Login into the app", () => _loginPage.LoginIntoApp());

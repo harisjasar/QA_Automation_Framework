@@ -75,5 +75,61 @@ namespace QA_AutomationFramework.Pages
         {
             return element.Displayed ? element : null;
         }
+
+        public void SwitchToWindow(string windowTitle)
+        {
+            const int MaxRetryAttempts = 20;
+            const int RetryDelayMilliseconds = 3000;
+            int attempt = 0;
+
+            while (true)
+            {
+                try
+                {
+                    if (TrySwitchToWindow(windowTitle))
+                    {
+                        return;
+                    }
+
+                    attempt++;
+                    if (attempt >= MaxRetryAttempts)
+                    {
+                        throw new Exception($"Window whose title contains '{windowTitle}' not found after {MaxRetryAttempts} attempts!");
+                    }
+
+                    Thread.Sleep(RetryDelayMilliseconds);
+                }
+                catch (Exception)
+                {
+                    attempt++;
+                    if (attempt >= MaxRetryAttempts)
+                    {
+                        throw;
+                    }
+
+                    Thread.Sleep(RetryDelayMilliseconds);
+                }
+            }
+        }
+
+        private bool TrySwitchToWindow(string windowTitle)
+        {
+            if (driver.Title.Contains(windowTitle))
+            {
+                return true;
+            }
+
+            foreach (var windowHandle in driver.WindowHandles)
+            {
+                driver.SwitchTo().Window(windowHandle);
+                if (driver.Title.Contains(windowTitle))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     }
 }
