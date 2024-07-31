@@ -132,7 +132,17 @@ To get started with this QA Automation Framework, follow the steps below:
       Host for Gmail is imap.gmail.com
       ```
 
-7. **Run the Tests**:
+7. **Configure `testData.json`**:
+    - Set the `Email` to the same email used in `appsettings.json`:
+      ```json
+      {
+          "BaseUrl": "https://fenixshare.anchormydata.com/fenixpyre/s/669ff2910e5caf9f73cd28ea/QA%2520Assignment",
+          "Email": "techlabs.automation@gmail.com",
+          "InvalidEmail": "techlabs.automationgmail.com"
+      }
+     ```
+
+8. **Run the Tests**:
     - You can now run the tests using Visual Studio's Test Explorer or by running the following command in the terminal:
       ```sh
       dotnet test
