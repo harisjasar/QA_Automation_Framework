@@ -26,12 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Logs\" />
-    <Folder Include="Reports\Recordings\" />
-    <Folder Include="Reports\Screenshots\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Configs\appsettings.integration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

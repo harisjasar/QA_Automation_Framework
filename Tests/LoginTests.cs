@@ -31,9 +31,6 @@ namespace QA_AutomationFramework.Tests
             Step("Extract and Enter OTP", () => _loginPage.EnterOtp(emailService.GetMostRecentOtp()));
             Step("Click Continune button to confirm OTP", () => _loginPage.ClickContinue());
             Step("Verify user info email", () => Assert.That(_loginPage.GetUserInfoEmail(), Is.EqualTo(testData.Email)));
-            
-
-
         }
 
         [Test]
